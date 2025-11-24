@@ -111,7 +111,7 @@ Deep-SegCLEM/
  │     ├── LM_metrics.xlsx
  │     └── EM_metrics.xlsx
 
-▶️ Usage
+Usage
 1. Load images
 
 Click Load LM → Select LM fluorescence image
@@ -177,39 +177,21 @@ Confidence
 
 Trained on high-resolution mitochondrial EM datasets
 
-❓ Help Manual
-
-A complete user manual is integrated in-app:
-Toolbar → Help / Manual
-It includes:
-
-Workflow explanation
-
-Metric definitions
-
-Color legend
-
-Citation instructions
-
-Contact details
 
 👩‍💻 Author
 
 Soumaya Zaghbani
 Max Planck Institute for Biophysics
-García-Saez Group – Regulated Cell Death
 Frankfurt am Main, Germany
 
 For questions or support:
-📧 soumaya.yaghbanigmail.com
+📧 soumaya.zaghbani@biophys.mpg.de
 
 📄 Citation
 
 If this tool supports your research, please cite:
 
-Zaghbani et al., Deep-SegCLEM: Automated Mitochondria Segmentation and Fiducial-Free Correlation for Light and Electron Microscopy, Max Planck Institute for Biophysics (2025).
 
-(Replace with journal citation once published.)
 
 📝 License
 

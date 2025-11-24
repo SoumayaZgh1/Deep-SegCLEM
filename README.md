@@ -1,6 +1,10 @@
 # Deep-SegCLEM
 **README – Deep-SegCLEM
 
+
+<img width="975" height="596" alt="image" src="https://github.com/user-attachments/assets/27e25f8f-b183-4837-b0c8-01960b47a6ce" />
+
+
 Mitochondria Segmentation, Correlation & Quantification Suite**
 
 Deep-SegCLEM is a standalone application for automated mitochondria segmentation, fiducial-free LM-EM correlation, and morphometric quantification, developed at the Max Planck Institute for Biophysics (García-Saez Group).

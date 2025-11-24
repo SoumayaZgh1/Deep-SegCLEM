@@ -2,7 +2,7 @@
 **README – Deep-SegCLEM
 
 
-<img width="975" height="596" alt="image" src="https://github.com/user-attachments/assets/27e25f8f-b183-4837-b0c8-01960b47a6ce" />
+<img width="975" height="514" alt="image" src="https://github.com/user-attachments/assets/191ee31e-5062-48d7-bc93-b05db912f157" />
 
 
 Mitochondria Segmentation, Correlation & Quantification Suite**

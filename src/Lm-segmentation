@@ -49,9 +49,7 @@ def load_dataset(image_dir, mask_dir, batch_size=16, shuffle=True):
 
 
 def FCN_ResNet50(input_shape=(None, None, 3), num_classes=1):
-    """
-    Fully convolutional ResNet50-based FCN that accepts arbitrary H, W.
-    """
+
     model_input = layers.Input(shape=input_shape)
 
     base_model = ResNet50(
@@ -61,11 +59,11 @@ def FCN_ResNet50(input_shape=(None, None, 3), num_classes=1):
     )
 
     # Encoder feature maps (same as your original)
-    conv1 = base_model.get_layer("conv1_relu").output           # ~ H/4
-    conv2 = base_model.get_layer("conv2_block3_out").output     # ~ H/4 or H/8
-    conv3 = base_model.get_layer("conv3_block4_out").output     # ~ H/8
-    conv4 = base_model.get_layer("conv4_block6_out").output     # ~ H/16
-    conv5 = base_model.get_layer("conv5_block3_out").output     # ~ H/32
+    conv1 = base_model.get_layer("conv1_relu").output           
+    conv2 = base_model.get_layer("conv2_block3_out").output     
+    conv3 = base_model.get_layer("conv3_block4_out").output     
+    conv4 = base_model.get_layer("conv4_block6_out").output     
+    conv5 = base_model.get_layer("conv5_block3_out").output    
 
     # Decoder
     x = layers.Conv2DTranspose(512, 3, strides=2, padding="same")(conv5)
@@ -91,7 +89,7 @@ def FCN_ResNet50(input_shape=(None, None, 3), num_classes=1):
         strides=2,
         padding="same",
         activation="sigmoid" if num_classes == 1 else "softmax"
-    )(x)   # <--- THIS (x) WAS MISSING
+    )(x)   
 
     return Model(inputs=model_input, outputs=x)
 
@@ -104,12 +102,12 @@ dynamic_model = FCN_ResNet50(input_shape=(None, None, 3), num_classes=1)
 # Optional: compile if you want metrics
 dynamic_model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
 
-train_images_dir = 'C:/newdataset/LM_tests/Dataset_LM/Images/Total_train'
-train_masks_dir  = 'C:/newdataset/LM_tests/Dataset_LM/Masks/Total_train'
-val_images_dir   = 'C:/newdataset/LM_tests/Dataset_LM/Images/Total_val'
-val_masks_dir    = 'C:/newdataset/LM_tests/Dataset_LM/masks/Total_val'
-test_images_dir  = 'C:/newdataset/lm/ANOTHER/TEST/IMAGES'
-test_masks_dir   = 'C:/newdataset/lm/ANOTHER/TEST/masks'
+train_images_dir = ''
+train_masks_dir  = ''
+val_images_dir   = ''
+val_masks_dir    = ''
+test_images_dir  = ''
+test_masks_dir   = ''
 
 
 # Load datasets

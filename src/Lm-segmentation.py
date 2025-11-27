@@ -16,13 +16,13 @@ import pandas as pd
 from PIL import Image
 import cv2
 
-# Preprocessing function for images
+
 def preprocess_image(image_path, to_rgb=True):
     image = tf.image.decode_jpeg(tf.io.read_file(image_path), channels=3 if to_rgb else 1)
     image = tf.image.resize(image, (512, 512)) / 255.0
     return image
 
-# Function to resize masks
+
 def resize_mask(mask, target_shape=(512, 512)):
     mask_resized = cv2.resize(mask, target_shape, interpolation=cv2.INTER_NEAREST)
     return mask_resized
@@ -31,8 +31,8 @@ def resize_mask(mask, target_shape=(512, 512)):
 def load_image_and_mask(image_path, mask_path):
     image = preprocess_image(image_path, to_rgb=True)
     mask = preprocess_image(mask_path, to_rgb=False)
-    mask = tf.image.resize(mask, (512, 512))  # Ensure correct mask shape
-    mask = tf.cast(mask > 0.5, tf.uint8)  # Convert to binary mask
+    mask = tf.image.resize(mask, (512, 512))  
+    mask = tf.cast(mask > 0.5, tf.uint8)  
     return image, mask
 
 # Function to load dataset
@@ -58,7 +58,6 @@ def FCN_ResNet50(input_shape=(None, None, 3), num_classes=1):
         input_tensor=model_input
     )
 
-    # Encoder feature maps (same as your original)
     conv1 = base_model.get_layer("conv1_relu").output           
     conv2 = base_model.get_layer("conv2_block3_out").output     
     conv3 = base_model.get_layer("conv3_block4_out").output     
@@ -82,7 +81,7 @@ def FCN_ResNet50(input_shape=(None, None, 3), num_classes=1):
     x = layers.Concatenate()([x, conv1])
     x = layers.Conv2D(64, 3, padding="same", activation="relu")(x)
 
-    # FINAL LAYER: MUST CALL IT ON x
+
     x = layers.Conv2DTranspose(
         num_classes,
         kernel_size=3,
@@ -95,11 +94,11 @@ def FCN_ResNet50(input_shape=(None, None, 3), num_classes=1):
 
 
 
-# Set learning rate and compile the model
+
 learning_rate = 1e-4
 dynamic_model = FCN_ResNet50(input_shape=(None, None, 3), num_classes=1)
 
-# Optional: compile if you want metrics
+
 dynamic_model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
 
 train_images_dir = ''
@@ -110,7 +109,7 @@ test_images_dir  = ''
 test_masks_dir   = ''
 
 
-# Load datasets
+
 batch_size = 16
 train_dataset = load_dataset(train_images_dir, train_masks_dir, batch_size=batch_size, shuffle=True)
 val_dataset = load_dataset(val_images_dir, val_masks_dir, batch_size=batch_size, shuffle=False)

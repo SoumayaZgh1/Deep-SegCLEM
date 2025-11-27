@@ -8,7 +8,7 @@ from tensorflow.keras import layers, Model
 from tensorflow.keras.applications import ResNet50
 import os
 import matplotlib.pyplot as plt
-# --- NEW IMPORTS FOR QUANTIFICATION ---
+
 import pandas as pd
 from skimage.morphology import skeletonize, remove_small_objects
 from skimage.measure import label, regionprops
@@ -16,9 +16,6 @@ import math
 import traceback
 from tkinter import ttk
 
-
-
-# ================== BRAND LOGO & STATUS/OVERLAY HELPERS ==================
 import sys
 import platform
 import subprocess
@@ -33,16 +30,14 @@ def resource_path(relative_path):
     Get absolute path to resource, works for dev and for PyInstaller exe.
     """
     try:
-        # When running as a bundled exe
         base_path = sys._MEIPASS
     except Exception:
-        # When running as a normal script
+
         base_path = os.path.abspath(".")
 
     return os.path.join(base_path, relative_path)
 
 
-# ===================== MASK EDITOR =====================
 from PIL import ImageOps
 
 def _composite_overlay_rgb(base_rgb: np.ndarray, mask_bin: np.ndarray, rgba=(255,0,0,110)):
@@ -55,16 +50,12 @@ def _composite_overlay_rgb(base_rgb: np.ndarray, mask_bin: np.ndarray, rgba=(255
     h, w = mask_bin.shape[:2]
     overlay = Image.new("RGBA", (w, h), (0,0,0,0))
     ov_np = np.array(overlay)
-    # put red in alpha only where mask>0
     alpha = (mask_bin > 0).astype(np.uint8) * rgba[3]
     ov_np[..., 0] = rgba[0]; ov_np[..., 1] = rgba[1]; ov_np[..., 2] = rgba[2]; ov_np[..., 3] = alpha
     overlay = Image.fromarray(ov_np, mode="RGBA")
     comp = base.convert("RGBA")
     comp.alpha_composite(overlay)
     return comp.convert("RGB")
-
-# ======================= MASK EDITOR (LM/EM) =======================
-# Requirements: cv2, PIL (Image, ImageTk), globals: mask1, mask2, image1, image2, label1, label2, IMAGE_DISPLAY_SIZE, THEME, root
 
 def refresh_preview_from_mask(kind: str):
     """Refresh left/right small preview label after editing."""
@@ -76,7 +67,6 @@ def refresh_preview_from_mask(kind: str):
         m = mask2
         target_label = label2
 
-    # normalize to 0..255 uint8
     if m is None:
         return
     mm = (m * 255).astype(np.uint8) if m.max() <= 1 else m.astype(np.uint8)
@@ -85,7 +75,7 @@ def refresh_preview_from_mask(kind: str):
         vis = cv2.cvtColor(vis, cv2.COLOR_GRAY2BGR)
     imgtk = ImageTk.PhotoImage(Image.fromarray(cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)))
     target_label.configure(image=imgtk)
-    target_label.image = imgtk  # keep ref
+    target_label.image = imgtk  
 
 
 class MaskEditorWindow:
@@ -102,8 +92,8 @@ class MaskEditorWindow:
         self.kind = kind
         self.parent = parent
 
-        # ---- get original image as background (for context) and the mask
-        self.mask = self._get_mask().copy()  # uint8 0/255
+    
+        self.mask = self._get_mask().copy() 
         self.h, self.w = self.mask.shape[:2]
 
         bg = self._get_background_image()  # BGR same size as mask
@@ -155,7 +145,7 @@ class MaskEditorWindow:
 
         self._imgtk = None
         self._cursor_id = None
-        self._last = None  # last (x,y) canvas for smooth stroke
+        self._last = None  
 
         # initial render
         self._compute_layout()
@@ -171,12 +161,12 @@ class MaskEditorWindow:
         self.canvas.bind("<ButtonRelease-3>", self._up)
         self.canvas.bind("<Motion>", self._hover)
 
-    # ---------- data sources ----------
+
     def _get_mask(self) -> np.ndarray:
         global mask1, mask2
         m = mask1 if self.kind == "LM" else mask2
         if m is None:
-            # create empty mask same size as background later
+
             raise ValueError(f"No {self.kind} mask in memory.")
         m = (m * 255).astype(np.uint8) if m.max() <= 1 else m.astype(np.uint8)
         if m.ndim == 3:
@@ -204,7 +194,7 @@ class MaskEditorWindow:
             bg = cv2.resize(bg, (self.w, self.h), interpolation=cv2.INTER_LINEAR)
         return bg
 
-    # ---------- layout & rendering ----------
+    
     def _compute_layout(self):
         """Letterbox image inside canvas; compute scale & padding."""
         cw = self.canvas.winfo_width() or self.view_w
@@ -222,19 +212,19 @@ class MaskEditorWindow:
 
     def _compose_display(self):
         """Blend bg + mask (white) and letterbox to canvas bitmap with safe clipping."""
-    # overlay mask in white on bg
+
         overlay = self.bg.copy()
         overlay[self.mask > 0] = (255, 50, 50)
         disp = cv2.addWeighted(self.bg, 0.6, overlay, 0.4, 0)
 
-    # resize to display area
+
         disp_res = cv2.resize(
            disp,
            (int(self.w * self.scale), int(self.h * self.scale)),
            interpolation=cv2.INTER_NEAREST
         )
 
-    # prepare empty canvas background
+
         full = np.zeros((self.view_h, self.view_w, 3), np.uint8)
         full[:] = (30, 30, 35)
 
@@ -250,7 +240,6 @@ class MaskEditorWindow:
         crop_h = max(0, y1 - y0)
         crop_w = max(0, x1 - x0)
 
-    # ✅ Only draw if crop is valid
         if crop_h > 0 and crop_w > 0:
             full[y0:y1, x0:x1] = disp_res[:crop_h, :crop_w]
 
@@ -262,10 +251,9 @@ class MaskEditorWindow:
         self._imgtk = ImageTk.PhotoImage(Image.fromarray(cv2.cvtColor(bm, cv2.COLOR_BGR2RGB)))
         self.canvas.delete("all")
         self.canvas.create_image(0, 0, image=self._imgtk, anchor="nw")
-        # keep cursor on top if present
         self._cursor_id = None
 
-    # ---------- coords ----------
+    
     def _canvas_to_mask(self, cx, cy):
         """Canvas (pixels) -> mask (pixels)."""
         mx = int((cx - self.pad_x) / self.scale)
@@ -276,7 +264,7 @@ class MaskEditorWindow:
         return (self.pad_x <= cx < self.view_w - self.pad_x) and \
                (self.pad_y <= cy < self.view_h - self.pad_y)
 
-    # ---------- painting operations ----------
+   
     def _stamp(self, cx, cy, value):
         """Draw a filled circle in mask at brush radius."""
         if not self._valid_canvas_point(cx, cy): return
@@ -284,11 +272,11 @@ class MaskEditorWindow:
         if mx < 0 or my < 0 or mx >= self.w or my >= self.h: return
         r = int(self.brush.get())
         cv2.circle(self.mask, (mx, my), r, int(value), thickness=-1)
-        self._render()  # refresh display
+        self._render()  
 
     def _line_stroke(self, cx0, cy0, cx1, cy1, value):
         """Interpolate between two canvas points and stamp circles (smooth stroke)."""
-        # clip early if outside
+        
         steps = max(1, int(np.hypot(cx1 - cx0, cy1 - cy0)))
         for t in range(steps + 1):
             x = int(cx0 + (cx1 - cx0) * t / steps)
@@ -320,7 +308,7 @@ class MaskEditorWindow:
         self._last = None
 
     def _hover(self, e):
-        # live circle cursor in canvas coords
+        
         self.canvas.delete(self._cursor_id)
         r = max(2, int(self.brush.get() * self.scale))
         x0, y0, x1, y1 = e.x - r, e.y - r, e.x + r, e.y + r
@@ -333,25 +321,25 @@ class MaskEditorWindow:
         self._compute_layout()
         self._render()
 
-    # ---------- apply ----------
+   
     def _apply_and_close(self):
         """Overwrite global mask, save PNG, refresh preview, close."""
         global mask1, mask2
-        # ensure 0/1 for program use; save 0/255 to disk
+        
         out_u8 = (self.mask > 0).astype(np.uint8) * 255
 
         if self.kind == "LM":
             mask1 = out_u8.copy()
             out_path = os.path.join("segmentation_results", "mask1_LM_original.png")
         else:
-            # keep EM mask as 0/1 in memory like before
+        
             mask2 = (out_u8 > 0).astype(np.uint8)
             out_path = os.path.join("segmentation_results", "mask2_EM.png")
 
         os.makedirs("segmentation_results", exist_ok=True)
         cv2.imwrite(out_path, out_u8)
 
-        # refresh preview panel in main UI
+        
         refresh_preview_from_mask(self.kind)
 
         messagebox.showinfo("Mask Editor", f"{self.kind} mask updated and saved:\n{out_path}")
@@ -392,34 +380,17 @@ def make_brand_logo(size: int = 22, stroke: int = 2):
 
     return ImageTk.PhotoImage(img)
 
-# Extend your existing outline icon factory with 'help' and 'folderopen'
-# (ADD these cases INSIDE your make_outline_icon(kind,...) function)
-# ---
-# elif kind == "help":
-#     drw.ellipse([r+2, r+2, s-r-2, s-r-2], outline=col, width=r)
-#     drw.arc([s*0.28, s*0.22, s*0.72, s*0.6], start=200, end=340, fill=col, width=r)
-#     drw.ellipse([s*0.45, s*0.68, s*0.55, s*0.78], fill=col)
-# elif kind == "folderopen":
-#     drw.rounded_rectangle([r, s*0.42, s-r, s-r], radius=4, outline=col, width=r)
-#     drw.polygon([(r+2, s*0.42), (s*0.42, s*0.42), (s*0.52, s*0.58), (r+2, s*0.58)], outline=col, width=r)
-#     drw.line([(s*0.24, s*0.24), (s*0.40, s*0.24)], fill=col, width=r)
-#     drw.line([(s*0.22, s*0.28), (s*0.38, s*0.28)], fill=col, width=r)
 
-
-
-
-# ===== Professional UI: theme + icon generator =====
 from PIL import ImageDraw, ImageFont
 
 
-# ============= HELP WINDOW FUNCTION =============
 def open_help_window():
     help_win = tk.Toplevel(root)
     help_win.title("User Manual – Mitochondria Analysis Suite")
     help_win.configure(bg=THEME["bg"])
     help_win.geometry("650x600")
     
-    # Make scrollable
+
     container = tk.Frame(help_win, bg=THEME["bg"])
     canvas = tk.Canvas(container, bg=THEME["bg"], highlightthickness=0)
     scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
@@ -433,12 +404,11 @@ def open_help_window():
     canvas.pack(side="left", fill="both", expand=True)
     scrollbar.pack(side="right", fill="y")
 
-    # Styled text sections
     def section(title, content):
         tk.Label(scroll_frame, text=title, font=("Segoe UI", 12, "bold"), fg=THEME["accent"], bg=THEME["bg"], pady=8).pack(anchor="w", padx=10)
         tk.Label(scroll_frame, text=content, font=("Segoe UI", 10), fg=THEME["text"], bg=THEME["bg"], justify="left", wraplength=600).pack(anchor="w", padx=20)
 
-    # --- Manual Content ---
+   
     section("🧭 Workflow Overview",
     "1. Click 'Load LM' to load Light Microscopy image.\n"
     "2. Click 'Load EM' to load Electron Microscopy image.\n"
@@ -532,24 +502,23 @@ def make_outline_icon(kind:str, size:int=22, stroke:int=2):
 
     elif kind == "help":
         drw.ellipse([r+2, r+2, s-r-2, s-r-2], outline=col, width=r)
-    # question curve
+
         drw.arc([s*0.28, s*0.22, s*0.72, s*0.6], start=200, end=340, fill=col, width=r)
-    # dot
+
         drw.ellipse([s*0.45, s*0.68, s*0.55, s*0.78], fill=col)
     else:
         drw.rectangle([r, r, s-r, s-r], outline=col, width=r)
-            # Add inside make_outline_icon() — extend icons:
+            
 
 
     return ImageTk.PhotoImage(img)
 
-# Small status badge factory
+
 def status_badge(text:str, fg:str, bg:str):
     lbl = tk.Label(text=text, font=("Segoe UI", 10, "bold"), fg=fg, bg=bg, padx=8, pady=2)
     return lbl
 
 
-# ---------- QUANTIFICATION HELPERS (FULL-IMAGE) ----------
 
 def ensure_binary(mask):
     m = (mask > 0).astype(np.uint8)
@@ -590,7 +559,7 @@ def overlay_full_skeleton(original_bgr, skel, endpoints, branchpoints, out_path)
     kernel = np.ones((3, 3), np.uint8)   # increase to (5,5) for even thicker lines
     skel_thick = cv2.dilate(skel_u8, kernel, iterations=1).astype(bool)
     overlay = original_bgr.copy()
-    # Skeleton (white)
+ 
     overlay[skel_thick] = (255, 0, 255)
     # Endpoints (green)
     ep_y, ep_x = np.where(endpoints)
@@ -613,8 +582,6 @@ def quantify_components(mask_for_metrics, source_name, image_name=""):
     """
     bin_mask = ensure_binary(mask_for_metrics)
 
-    # Optional: remove tiny specks (tune min_size if needed)
-    # bin_mask = remove_small_objects(bin_mask.astype(bool), min_size=20).astype(np.uint8)
 
     labeled = label(bin_mask, connectivity=2)
     props = regionprops(labeled)
@@ -688,7 +655,6 @@ def rotate_image(image, angle):
 
 
 
-    # Ensure borderValue is white (255) for masks
     rotated = cv2.warpAffine(image, M, (bound_w, bound_h), flags=cv2.INTER_NEAREST)
     return rotated
 
@@ -709,12 +675,12 @@ def display_image_with_matplotlib(image, title):
     """Display an image with Matplotlib while handling grayscale and color images correctly."""
     plt.figure(figsize=(6, 6))
     
-    # Check if the image has 3 channels (Color)
+
     if len(image.shape) == 3 and image.shape[2] == 3:
         plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))  # Convert BGR to RGB
     elif len(image.shape) == 2:  # If Grayscale
         plt.imshow(image, cmap='gray')
-    else:  # If it's a single-channel but mistakenly has 3rd dimension
+    else:  
         plt.imshow(image[:, :, 0], cmap='gray')
     
     plt.title(title)
@@ -730,21 +696,21 @@ def correlate_images():
         return
 
     try:
-        # Convert from [0,1] to [0,255] if needed and ensure uint8
+        
         lm_mask = (mask1 * 255).astype(np.uint8) if mask1.max() <= 1 else mask1.astype(np.uint8)
         em_mask = (mask2 * 255).astype(np.uint8) if mask2.max() <= 1 else mask2.astype(np.uint8)
 
-        # Ensure grayscale format
+        
         if len(lm_mask.shape) == 3:
             lm_mask = cv2.cvtColor(lm_mask, cv2.COLOR_BGR2GRAY)
         if len(em_mask.shape) == 3:
             em_mask = cv2.cvtColor(em_mask, cv2.COLOR_BGR2GRAY)
 
-        # 🔹 Binarize masks to 0/255 (like in the standalone script)
+        
         lm_mask = ((lm_mask > 0).astype(np.uint8)) * 255
         em_mask = ((em_mask > 0).astype(np.uint8)) * 255
 
-        # Save original (now binarized) masks for debugging
+        
         cv2.imwrite("debug_original_lm_mask.png", lm_mask)
         cv2.imwrite("debug_original_em_mask.png", em_mask)
         print("em_mask shape:", em_mask.shape)
@@ -977,17 +943,16 @@ def unpad(img_p, pad_info):
 
 
 def preprocess_for_lm_variable(image_path_or_obj):
-    im_bgr = _to_3c_bgr(image_path_or_obj)           # HxWx3 uint8
+    im_bgr = _to_3c_bgr(image_path_or_obj)        
     im_rgb = cv2.cvtColor(im_bgr, cv2.COLOR_BGR2RGB)
     im_padded, pad_info = pad_to_multiple(im_rgb, 32)
-    x = (im_padded.astype(np.float32) / 255.0)[None, ...]  # (1, Hpad, Wpad, 3)
-    return x, pad_info, im_rgb.shape[:2]  # keep original H,W for sanity
+    x = (im_padded.astype(np.float32) / 255.0)[None, ...]  
+    return x, pad_info, im_rgb.shape[:2]  
 
 def postprocess_lm_output_variable(pred, pad_info, orig_hw, threshold=0.5):
-    # pred is model output, shape (1, Hpad, Wpad, 1)
+
     p = pred[0, ..., 0]
     p_unpad = unpad(p, pad_info)
-    # (optional) sanity crop to original size in case image had been pre-cropped elsewhere
     H, W = orig_hw
     p_unpad = p_unpad[:H, :W]
     mask = (p_unpad > threshold).astype(np.uint8) * 255
@@ -1011,14 +976,13 @@ def preprocess_image_em(image, target_size=(256, 256)):
     if isinstance(image, Image.Image):
         image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
-    # ✅ Convert grayscale → RGB (3-channel)
     if len(image.shape) == 2:  
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)  # Convert grayscale to RGB
-    else:  # If it's BGR (OpenCV loaded), convert to RGB
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)  
+    else:  
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    image = cv2.resize(image, target_size) / 255.0  # Normalize
-    image = np.expand_dims(image, axis=0)  # (1,256,256,3)
+    image = cv2.resize(image, target_size) / 255.0  
+    image = np.expand_dims(image, axis=0)  
     return image
 
 
@@ -1028,16 +992,14 @@ def segment_image_em(image, model):
     Segment the EM image using the provided model and return the binary mask.
     """
     try:
-        if isinstance(image, Image.Image):  # If PIL Image, convert to NumPy
+        if isinstance(image, Image.Image): 
             image = np.array(image)
 
-        preprocessed_image = preprocess_image_em(image)  # Must output (1,256,256,3)
+        preprocessed_image = preprocess_image_em(image)  
         prediction = model.predict(preprocessed_image)
 
-        # ✅ Model returns [refined_output, seg_output, conf]
-        refined = prediction[0]  # Take ONLY refined output
+        refined = prediction[0] 
 
-        # Now refined is shape (1, 256, 256, 1)
         binary_mask = (refined[0, :, :, 0] > 0.5).astype(np.uint8)
         binary_mask = cv2.resize(binary_mask, (512, 512), interpolation=cv2.INTER_NEAREST)
 
@@ -1070,7 +1032,7 @@ def segment_images():
     if image1 is not None and image2 is not None:
         try:
             # Segment the LM image
-            mask1 = segment_image_lmm(image1, model1)  # Updated LM segmentation
+            mask1 = segment_image_lmm(image1, model1)  
             if mask1 is None:
                 raise ValueError("Segmentation for the first image (LM) failed.")
 
@@ -1079,7 +1041,7 @@ def segment_images():
             cv2.imwrite(lm_mask_save_path, mask1)
 
             # Segment the EM image
-            resized_image2 = image2.resize((512, 512))  # Ensure correct size for processing
+            resized_image2 = image2.resize((512, 512))  
             mask2 = segment_image_em(np.array(resized_image2), unet_model_em)
             if mask2 is None:
                 raise ValueError("Segmentation for the second image (EM) failed.")
@@ -1103,7 +1065,7 @@ def segment_images():
         messagebox.showwarning("Warning", "Please load both images before running segmentation.")
 
 
-IMAGE_DISPLAY_SIZE = (300, 300)  # Adjust image size
+IMAGE_DISPLAY_SIZE = (300, 300) 
 
 def load_first_image():
     global image1
@@ -1116,7 +1078,6 @@ def load_first_image():
         label1.image = img_tk
         image1 = file_path
 
-# Function to load the second image (EM)
 def load_second_image():
     global image2
     file_path = filedialog.askopenfilename()
@@ -1147,32 +1108,30 @@ def FCN_CoReNet(input_shape=(256, 256, 3), num_classes=1):
     conv4 = base_model.get_layer("conv4_block6_out").output
     conv5 = base_model.get_layer("conv5_block3_out").output
 
-    # Decoder with SE and Dropout
     x = layers.Conv2DTranspose(512, kernel_size=3, strides=2, padding="same")(conv5)
     x = layers.Concatenate()([x, conv4])
     x = layers.Conv2D(512, kernel_size=3, padding="same", activation="relu")(x)
     x = se_block(x)
-    x = layers.Dropout(0.3)(x)  # 🔥 Dropout after SE block
+    x = layers.Dropout(0.3)(x)  
 
     x = layers.Conv2DTranspose(256, kernel_size=3, strides=2, padding="same")(x)
     x = layers.Concatenate()([x, conv3])
     x = layers.Conv2D(256, kernel_size=3, padding="same", activation="relu")(x)
     x = se_block(x)
-    x = layers.Dropout(0.3)(x)  # 🔥 Dropout
+    x = layers.Dropout(0.3)(x)  
 
     x = layers.Conv2DTranspose(128, kernel_size=3, strides=2, padding="same")(x)
     x = layers.Concatenate()([x, conv2])
     x = layers.Conv2D(128, kernel_size=3, padding="same", activation="relu")(x)
     x = se_block(x)
-    x = layers.Dropout(0.3)(x)  # 🔥 Dropout
+    x = layers.Dropout(0.3)(x)  
 
     x = layers.Conv2DTranspose(64, kernel_size=3, strides=2, padding="same")(x)
     x = layers.Concatenate()([x, conv1])
     x = layers.Conv2D(64, kernel_size=3, padding="same", activation="relu")(x)
     x = se_block(x)
-    x = layers.Dropout(0.3)(x)  # 🔥 Dropout
+    x = layers.Dropout(0.3)(x) 
 
-    # Upsample to original size
     shared_features_up = layers.UpSampling2D(size=(2, 2))(x)
 
     # Output branches
@@ -1200,7 +1159,6 @@ def FCN_ResNet50(input_shape=(None, None, 3), num_classes=1):
         input_tensor=model_input
     )
 
-    # Encoder feature maps (same as your original)
     conv1 = base_model.get_layer("conv1_relu").output           # ~ H/4
     conv2 = base_model.get_layer("conv2_block3_out").output     # ~ H/4 or H/8
     conv3 = base_model.get_layer("conv3_block4_out").output     # ~ H/8
@@ -1224,14 +1182,13 @@ def FCN_ResNet50(input_shape=(None, None, 3), num_classes=1):
     x = layers.Concatenate()([x, conv1])
     x = layers.Conv2D(64, 3, padding="same", activation="relu")(x)
 
-    # FINAL LAYER: MUST CALL IT ON x
     x = layers.Conv2DTranspose(
         num_classes,
         kernel_size=3,
         strides=2,
         padding="same",
         activation="sigmoid" if num_classes == 1 else "softmax"
-    )(x)   # <--- THIS (x) WAS MISSING
+    )(x)  
 
     return Model(inputs=model_input, outputs=x)
 
@@ -1247,7 +1204,7 @@ def quantify_now():
     try:
         os.makedirs("quantification_results", exist_ok=True)
 
-        # ---------- LM Full Overlay ----------
+    
         lm_img_name = os.path.splitext(os.path.basename(image1))[0] if isinstance(image1, str) else "LM"
         lm_orig = cv2.imread(image1) if isinstance(image1, str) else None
         if lm_orig is None:
@@ -1263,7 +1220,6 @@ def quantify_now():
         lm_df = quantify_components(lm_bin, "LM", lm_img_name)
         lm_excel_path = append_to_excel_separate(lm_df, "LM", out_dir="quantification_results")
 
-        # ---------- EM Full Overlay ----------
         em_img_name = "EM"
         em_orig_pil = image2  # PIL image
         em_orig_rgb = np.array(em_orig_pil.convert("RGB"))
@@ -1291,7 +1247,6 @@ def quantify_now():
         traceback.print_exc()
         messagebox.showerror("Quantification Error", f"{qe}")
 
-# ======== THREAD-SAFE COMPUTE-ONLY VERSIONS (NO TK, NO MATPLOTLIB) ========
 
 def segment_images_compute():
     """
@@ -1312,7 +1267,7 @@ def segment_images_compute():
     lm_mask_save_path = os.path.join("segmentation_results", "mask1_LM_original.png")
     cv2.imwrite(lm_mask_save_path, mask1)
 
-    # EM (compute at model size then save)
+
     resized_image2 = image2.resize((512, 512))
     m2 = segment_image_em(np.array(resized_image2), unet_model_em)
     if m2 is None:
@@ -1341,30 +1296,28 @@ def correlate_images_compute():
     if mask1 is None or mask2 is None:
         return {"ok": False, "msg": "Please segment both images before running correlation."}
 
-    # ---------- PREPROCESS MASKS (like in correlate_lm_em) ----------
-    # Convert to uint8 and rescale if in [0,1]
     lm_mask = (mask1 * 255).astype(np.uint8) if mask1.max() <= 1 else mask1.astype(np.uint8)
     em_mask = (mask2 * 255).astype(np.uint8) if mask2.max() <= 1 else mask2.astype(np.uint8)
 
-    # Ensure single-channel
+
     if len(lm_mask.shape) == 3:
         lm_mask = cv2.cvtColor(lm_mask, cv2.COLOR_BGR2GRAY)
     if len(em_mask.shape) == 3:
         em_mask = cv2.cvtColor(em_mask, cv2.COLOR_BGR2GRAY)
 
-    # Binarize to 0/255 like in the standalone script
+  
     lm_mask = ((lm_mask > 0).astype(np.uint8)) * 255
     em_mask = ((em_mask > 0).astype(np.uint8)) * 255
-    # ------------------------------------------------------ #
+  
 
     os.makedirs("correlation_results", exist_ok=True)
 
-    # Same search space as correlate_lm_em
+ 
     angles = range(0, 360, 1)
     flips = [1, 0, -1]
     scale_percents = [20, 30, 40, 50, 60, 70, 80, 90, 100]
 
-    best_match = None  # (score, loc, angle, flip, scale, w, h, trans_lm_mask)
+    best_match = None  
 
     for scale_percent in scale_percents:
         # Downscale EM mask once per scale (like in correlate_lm_em)
@@ -1384,7 +1337,7 @@ def correlate_images_compute():
                 if H < th or W < tw:
                     continue
 
-                # Template matching on LM mask (shape-based)
+            
                 result = cv2.matchTemplate(trans_lm_mask, downscaled_em_mask, cv2.TM_CCOEFF_NORMED)
                 _, max_val, _, max_loc = cv2.minMaxLoc(result)
 
@@ -1432,7 +1385,6 @@ def correlate_images_compute():
     else:
         overlay_path = None
 
-    # ---------- SAVE TRANSFORMED LM ORIGINAL WITH BOX + CROP (unchanged) ----------
     if isinstance(image1, str):
         lm_image = cv2.imread(image1)
     elif isinstance(image1, Image.Image):
@@ -1468,7 +1420,7 @@ def correlate_images_compute():
         "cropped_lm_path": cropped_lm_path,
         "angle": angle,
         "flip": flipCode,
-        "scale_percent": scale_percent,  # <-- fixed: single best scale, not the list
+        "scale_percent": scale_percent, 
         "score": float(max_val)
     }
 
@@ -1524,12 +1476,6 @@ def quantify_compute():
         "em_excel": em_excel_path
     }
 
-# # Load models
-# model1 = FCN_ResNet50(input_shape=(None, None, 3), num_classes=1)
-# model1.load_weights("fcn_resnet50_best.h5")
-# unet_model_em = FCN_CoReNet(input_shape=(256, 256, 3))
-# unet_model_em.load_weights("savedcopy.h5")
-
 
 
 model1 = FCN_ResNet50(input_shape=(None, None, 3), num_classes=1)
@@ -1540,7 +1486,6 @@ unet_model_em.load_weights(resource_path("savedcopy.h5"))
 
 
 
-# ===================== IMAGE PREVIEW & FULL VIEWER =====================
 
 def open_full_image(path):
     """Opens a full resolution image in a scrollable viewer window."""
@@ -1581,7 +1526,7 @@ def show_preview_window(title, image_paths):
     frame = tk.Frame(prev, bg=THEME["bg"])
     frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-    max_thumb_size = 350  # Thumbnail max size
+    max_thumb_size = 350  
 
     for idx, path in enumerate(image_paths):
         if not os.path.exists(path):  # Skip if missing
@@ -1598,7 +1543,6 @@ def show_preview_window(title, image_paths):
         thumb.image = img_tk  # keep ref
         thumb.grid(row=0, column=idx, padx=10, pady=10)
 
-        # Click event to open full image
         thumb.bind("<Button-1>", lambda e, p=path: open_full_image(p))
 
 
@@ -1606,8 +1550,6 @@ def show_preview_window(title, image_paths):
 
 
 
-
-# ===================== Modern Professional UI =====================
 root = tk.Tk()
 root.title("Mitochondria Analysis Suite")
 root.configure(bg=THEME["bg"])
@@ -1640,7 +1582,7 @@ class ProcessingOverlay:
             return
 
         if self.fullscreen:
-            # ==== OLD: dim the whole root ====
+  
             self.win = tk.Toplevel(self.parent)
             self.win.overrideredirect(True)
             self.win.attributes("-topmost", True)
@@ -1653,28 +1595,28 @@ class ProcessingOverlay:
             # Center card
             card_parent = self.win
         else:
-            # ==== NEW: small floating popup ====
+            
             self.win = tk.Toplevel(self.parent)
-            self.win.overrideredirect(True)  # frameless
+            self.win.overrideredirect(True) 
             self.win.attributes("-topmost", True)
-            self.win.configure(bg=THEME["panel"])  # card is the window
+            self.win.configure(bg=THEME["panel"])  
             self.win.update_idletasks()
 
             w, h = 360, 120
-            # place near top-center of the main window
+           
             px = self.parent.winfo_rootx() + max(0, (self.parent.winfo_width() - w) // 2)
             py = self.parent.winfo_rooty() + 80
             self.win.geometry(f"{w}x{h}+{px}+{py}")
 
-            card_parent = self.win  # the window itself acts as the card
+            card_parent = self.win  
 
-        # Build the card content
+        
         card = tk.Frame(card_parent, bg=THEME["panel"], bd=0,
                         highlightthickness=1, highlightbackground=THEME["border"])
         if self.fullscreen:
             card.place(relx=0.5, rely=0.5, anchor="center")
         else:
-            # fill the small popup
+            
             card.pack(fill="both", expand=True)
 
         lbl = tk.Label(card, text=self.text, font=("Segoe UI", 12, "bold"),
@@ -1685,7 +1627,7 @@ class ProcessingOverlay:
                                 fg=THEME["accent"], bg=THEME["panel"])
         self.spinner.pack(pady=(0, 10))
 
-        # animate spinner
+    
         def animate():
             glyphs = ["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"]
             i = 0
@@ -1695,7 +1637,7 @@ class ProcessingOverlay:
                 time.sleep(0.07)
         threading.Thread(target=animate, daemon=True).start()
 
-        # size card to content if fullscreen
+    
         if self.fullscreen:
             card.update_idletasks()
             w, h = max(220, card.winfo_width()), max(90, card.winfo_height())
@@ -1709,8 +1651,6 @@ class ProcessingOverlay:
 
 
 
-
-# -------- Open folder utility --------
 def open_folder(path: str):
     try:
         if platform.system() == "Windows":
@@ -1725,15 +1665,14 @@ def open_folder(path: str):
         set_status("Open folder failed")
 
 
-# Global stateful status (no logic change to your functions)
+
 status_lm  = tk.StringVar(value="Not loaded")
 status_em  = tk.StringVar(value="Not loaded")
 status_seg = tk.StringVar(value="Pending")
 status_corr= tk.StringVar(value="Pending")
 status_q   = tk.StringVar(value="Ready")
 
-# ---------- Top Title Bar ----------
-# ---------- Top Title Bar (with brand) ----------
+
 title_bar = tk.Frame(root, bg=THEME["panel"], height=56, bd=0, highlightthickness=0)
 title_bar.pack(fill="x", side="top")
 
@@ -1778,7 +1717,6 @@ def mk_toolbtn(parent, icon, text, cmd):
     btn.bind("<Enter>", _ent); btn.bind("<Leave>", _lev)
     return btn
 
-# Wrap existing handlers to update status without changing your logic
 def on_load_lm():
     set_status("Loading LM image…")
     load_first_image()
@@ -1843,7 +1781,7 @@ def show_segmentation_preview_with_edit(lm_path, em_path):
                   fg=THEME["text"], bg=THEME["panel"], activebackground=THEME["button-h"],
                   relief="flat", padx=12, pady=6).pack(side="left", padx=4)
 
-    # make columns expand
+
     wrap.grid_columnconfigure(0, weight=1)
     wrap.grid_columnconfigure(1, weight=1)
 
@@ -1860,7 +1798,7 @@ def on_segment():
     def worker():
         try:
             set_status("Running segmentation…")
-            result = segment_images_compute()  # your segmentation wrapper
+            result = segment_images_compute()  
         finally:
             def _finish():
                 overlay.close()
@@ -1875,7 +1813,7 @@ def on_segment():
                         f"Saved:\n• {result['lm_path']}\n• {result['em_path']}"
                     )
 
-                    # ✅ REPLACED with advanced editor preview
+               
                     show_segmentation_preview_with_edit(result["lm_path"], result["em_path"])
 
                 set_status("Idle")
@@ -1896,18 +1834,17 @@ def on_correlate():
         result = {"ok": False}
         try:
             set_status("Running correlation…")
-            result = correlate_images()  # ✅ Use compute version (no UI blocking)
+            result = correlate_images()
         except Exception as e:
             traceback.print_exc()
             set_status("Correlation failed")
         finally:
             def _finish():
                 try:
-                    overlay.close()  # ✅ FORCE CLOSE NO MATTER WHAT
+                    overlay.close() 
                 except:
                     pass
 
-                # ✅ Use returned paths if available
                 if result.get("ok") and result.get("result_path") and result.get("overlay_path"):
                     status_corr.set("Correlated ✓")
                     set_status("Correlation complete")
@@ -1935,7 +1872,6 @@ def quantify_now_return_paths():
     try:
         os.makedirs("quantification_results", exist_ok=True)
 
-        # ---------- LM Full Overlay ----------
         lm_img_name = os.path.splitext(os.path.basename(image1))[0] if isinstance(image1, str) else "LM"
         lm_orig = cv2.imread(image1) if isinstance(image1, str) else None
         if lm_orig is None:
@@ -1951,7 +1887,7 @@ def quantify_now_return_paths():
         lm_df = quantify_components(lm_bin, "LM", lm_img_name)
         append_to_excel_separate(lm_df, "LM", out_dir="quantification_results")
 
-        # ---------- EM Full Overlay ----------
+
         em_img_name = "EM"
         em_orig_rgb = np.array(image2.convert("RGB"))
         em_orig_bgr = cv2.cvtColor(em_orig_rgb, cv2.COLOR_RGB2BGR)
@@ -1985,7 +1921,7 @@ def on_quantify():
         em_overlay_path = None
         try:
             set_status("Exporting Excel + skeleton overlays…")
-            lm_overlay_path, em_overlay_path = quantify_now_return_paths()  # ✅ returns paths now
+            lm_overlay_path, em_overlay_path = quantify_now_return_paths()  
         finally:
             def _finish():
                 overlay.close()
@@ -1998,7 +1934,6 @@ def on_quantify():
                         "Quantification Done",
                         f"Saved:\n• {lm_overlay_path}\n• {em_overlay_path}"
                     )
-                    # ✅ Preview
                     show_preview_window("Skeleton Overlay Preview", [
                         lm_overlay_path, em_overlay_path
                     ])
@@ -2018,13 +1953,12 @@ mk_toolbtn(toolbar, ico_quantify,  "Quantify & Export", on_quantify).pack(side="
 mk_toolbtn(toolbar, ico_quantify, "Quantify & Export", on_quantify)
 
 
-# ---- Folder group selection + Open button ----
-from tkinter import ttk as _ttk  # ensure ttk imported
+
+from tkinter import ttk as _ttk 
 
 folder_group_var = tk.StringVar(value="quantification_results")
 folder_choices = ["segmentation_results", "correlation_results", "quantification_results"]
 
-# A small dark-themed ttk Style for combobox
 sty = _ttk.Style()
 try:
     sty.theme_use("clam")
@@ -2054,11 +1988,11 @@ mk_toolbtn(toolbar, ico_help, " Help / Manual", lambda: open_help_window()).pack
 
 
 
-# ---------- Main Content: two image panels ----------
+
 content = tk.Frame(root, bg=THEME["bg"])
 content.pack(fill="both", expand=True, padx=16, pady=(0, 16))
 
-# LM Panel
+
 panel_lm = tk.Frame(content, bg=THEME["bg-alt"], bd=0, highlightthickness=1, highlightbackground=THEME["border"])
 panel_lm.place(relx=0.02, rely=0.02, relwidth=0.46, relheight=0.86)
 
@@ -2090,10 +2024,9 @@ em_status_lbl.pack(side="right", padx=12, pady=10)
 
 em_canvas = tk.Label(panel_em, bg=THEME["panel"])
 em_canvas.pack(fill="both", expand=True, padx=12, pady=(0,12))
-# We re-point your existing label2 to this styled container:
+
 label2 = em_canvas
 
-# ---------- Bottom Tip / Legend ----------
 legend = tk.Frame(root, bg=THEME["bg"])
 legend.pack(fill="x", padx=16, pady=(0, 10))
 tk.Label(
@@ -2103,7 +2036,6 @@ tk.Label(
 ).pack(side="left")
 
 
-# ---------- Bottom Status Bar ----------
 status_bar = tk.Frame(root, bg=THEME["panel2"], height=28)
 status_bar.pack(fill="x", side="bottom")
 tk.Label(status_bar, textvariable=status_text, font=("Segoe UI", 10),

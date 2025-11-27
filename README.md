@@ -156,10 +156,10 @@ Full-image skeleton overlays
 
 Excel spreadsheets
 
-🧠 Models Used
+Models Used
 LM Model
 
-Architecture: FCN-ResNet50 (fully convolutional)
+Architecture: FCN-ResNet50 
 
 Input: Arbitrary size
 
@@ -177,12 +177,9 @@ Refined mask
 
 Raw segmentation
 
-Confidence
-
-Trained on high-resolution mitochondrial EM datasets
 
 
-👩‍💻 Author
+Author
 
 Soumaya Zaghbani
 Max Planck Institute for Biophysics

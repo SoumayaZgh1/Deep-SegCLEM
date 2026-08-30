@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "napari-deepsegclem"
+version = "1.0.0"
+description = "Napari plugin for CLEM mitochondria segmentation, correlation and quantification"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Soumaya Zaghbani", email = "soumaya.zaghbani@biophys.mpg.de" }
+]
+keywords = ["napari", "CLEM", "mitochondria", "segmentation", "correlation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: napari",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "napari>=0.4.18",
+    "numpy",
+    "opencv-python-headless",
+    "Pillow",
+    "scikit-image",
+    "pandas",
+    "openpyxl",
+    "tensorflow>=2.10",
+    "qtpy",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-qt", "napari[all]"]
+
+[project.entry-points."napari.manifest"]
+napari-deepsegclem = "napari_deepsegclem:napari.yaml"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+napari_deepsegclem = ["napari.yaml"]

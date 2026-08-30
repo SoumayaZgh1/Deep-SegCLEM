@@ -1,0 +1,139 @@
+Metadata-Version: 2.4
+Name: napari-deepsegclem
+Version: 1.0.0
+Summary: Napari plugin for CLEM mitochondria segmentation, correlation and quantification
+Author-email: Soumaya Zaghbani <soumaya.zaghbani@biophys.mpg.de>
+License: MIT
+Keywords: napari,CLEM,mitochondria,segmentation,correlation
+Classifier: Development Status :: 4 - Beta
+Classifier: Framework :: napari
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Scientific/Engineering :: Image Processing
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: napari>=0.4.18
+Requires-Dist: numpy
+Requires-Dist: opencv-python-headless
+Requires-Dist: Pillow
+Requires-Dist: scikit-image
+Requires-Dist: pandas
+Requires-Dist: openpyxl
+Requires-Dist: tensorflow>=2.10
+Requires-Dist: qtpy
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-qt; extra == "dev"
+Requires-Dist: napari[all]; extra == "dev"
+
+# napari-deepsegclem
+
+**Deep-SegCLEM** — Mitochondria Segmentation, Correlation & Quantification  
+Max Planck Institute for Biophysics · Zaghbani et al. 2025
+
+A [napari] plugin providing a full CLEM analysis pipeline directly inside the Napari viewer:
+
+| Tab | What it does |
+|-----|-------------|
+| ⚙️ Setup | Browse and load your `.h5` model weight files |
+| 📂 Load | Open LM, EM and optional organelle channel images as Napari layers |
+| 🔬 Segment | Run FCN-ResNet50 (LM) and FCN-CoReNet (EM) — masks appear as label layers |
+| 🔗 Correlate | Template-matching alignment of LM→EM across rotation, flip and scale |
+| 📊 Quantify | Per-component metrics (area, circularity, skeleton, branch-points) exported to Excel |
+
+---
+
+## Installation
+
+### Prerequisites
+
+- Python ≥ 3.8
+- [napari] ≥ 0.4.18
+- TensorFlow ≥ 2.10 (install separately for GPU support if needed)
+
+### Install from source (recommended)
+
+```bash
+# 1. Clone or unzip the package
+cd napari-deepsegclem
+
+# 2. Install in editable mode
+pip install -e .
+
+# 3. Launch napari
+napari
+```
+
+Then open the plugin from the **Plugins** menu → **Deep-SegCLEM**.
+
+### Install via pip (once published)
+
+```bash
+pip install napari-deepsegclem
+```
+
+---
+
+## Required weight files
+
+Place your trained weight files in the same directory you launch napari from, **or** use the **Setup** tab to browse to them:
+
+| File | Model |
+|------|-------|
+| `fcn_resnet50_best.h5` | LM segmentation (FCN-ResNet50) |
+| `savedcopy.h5` | EM segmentation (FCN-CoReNet) |
+
+---
+
+## Workflow
+
+```
+1. Setup  →  Browse .h5 weights  →  Click "Load Models"
+2. Load   →  Browse LM image  +  Browse EM image
+3. Segment→  (optionally edit masks directly in Napari with Paint/Erase)
+              →  "Sync Masks from Layers" to update memory
+4. Correlate→  choose angle step + scale presets  →  Run
+5. Quantify →  Run  →  Excel files + skeleton overlay images saved
+```
+
+---
+
+## Output files
+
+| Folder | Contents |
+|--------|----------|
+| `segmentation_results/` | Binary masks for LM and EM |
+| `correlation_results/` | Best-match debug image, overlays, cropped LM region |
+| `quantification_results/` | Skeleton overlay PNGs + `LM_metrics.xlsx` / `EM_metrics.xlsx` |
+
+---
+
+## Metrics (Excel)
+
+| Column | Description |
+|--------|-------------|
+| `area_px` | Component area in pixels |
+| `perimeter_px` | Boundary length |
+| `circularity` | 4π·Area/Perimeter²  (1 = perfect circle) |
+| `skeleton_length_px` | Medial-axis length |
+| `n_endpoints` | Segment end-tips |
+| `n_branchpoints` | Junction count (network complexity) |
+
+---
+
+## Citation
+
+If this software supports your research, please cite:
+
+> Zaghbani S. et al. *Deep-SegCLEM: Automated mitochondria segmentation and correlation for CLEM data.*  
+> Max Planck Institute for Biophysics, 2025.
+
+---
+
+## Contact
+
+**Soumaya Zaghbani** · soumaya.zaghbani@biophys.mpg.de  
+Max Planck Institute for Biophysics, Frankfurt am Main, Germany
+
+[napari]: https://napari.org

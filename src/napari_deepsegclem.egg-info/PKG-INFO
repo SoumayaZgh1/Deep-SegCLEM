@@ -1,3 +1,32 @@
+Metadata-Version: 2.4
+Name: napari-deepsegclem
+Version: 1.0.0
+Summary: Napari plugin for CLEM mitochondria segmentation, correlation and quantification
+Author-email: Soumaya Zaghbani <soumaya.zaghbani@biophys.mpg.de>
+License: MIT
+Keywords: napari,CLEM,mitochondria,segmentation,correlation
+Classifier: Development Status :: 4 - Beta
+Classifier: Framework :: napari
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Scientific/Engineering :: Image Processing
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: napari>=0.4.18
+Requires-Dist: numpy
+Requires-Dist: opencv-python-headless
+Requires-Dist: Pillow
+Requires-Dist: scikit-image
+Requires-Dist: pandas
+Requires-Dist: openpyxl
+Requires-Dist: tensorflow>=2.10
+Requires-Dist: qtpy
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-qt; extra == "dev"
+Requires-Dist: napari[all]; extra == "dev"
+
 # napari-deepsegclem
 
 **Deep-SegCLEM** — Mitochondria Segmentation, Correlation & Quantification  

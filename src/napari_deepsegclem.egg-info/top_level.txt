@@ -1,0 +1,2 @@
+napari_deepsegclem
+napari_deeps├⌐gclem

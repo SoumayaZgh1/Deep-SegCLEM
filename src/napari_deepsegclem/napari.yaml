@@ -1,0 +1,14 @@
+name: napari-deepsegclem
+display_name: Deep-SegCLEM
+schema_version: "0.2.1"
+
+contributions:
+  commands:
+    - id: napari-deepsegclem.make_widget
+      python_name: napari_deepsegclem:DeepSegCLEMWidget
+      title: Open Deep-SegCLEM
+
+  widgets:
+    - command: napari-deepsegclem.make_widget
+      display_name: Deep-SegCLEM
+      autogenerate: false

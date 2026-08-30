@@ -1,0 +1,14 @@
+README.md
+pyproject.toml
+src/napari_deepsegclem/__init__.py
+src/napari_deepsegclem/_core.py
+src/napari_deepsegclem/_version.py
+src/napari_deepsegclem/_widget.py
+src/napari_deepsegclem/napari.yaml
+src/napari_deepsegclem.egg-info/PKG-INFO
+src/napari_deepsegclem.egg-info/SOURCES.txt
+src/napari_deepsegclem.egg-info/dependency_links.txt
+src/napari_deepsegclem.egg-info/entry_points.txt
+src/napari_deepsegclem.egg-info/requires.txt
+src/napari_deepsegclem.egg-info/top_level.txt
+tests/test_plugin.py

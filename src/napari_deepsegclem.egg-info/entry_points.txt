@@ -1,0 +1,2 @@
+[napari.manifest]
+napari-deepsegclem = napari_deepsegclem:napari.yaml
